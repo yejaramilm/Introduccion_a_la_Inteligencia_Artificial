@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt Engineering — Fundamentos | EAFIT IA 2026</title>
+  <style>
+    :root {
+      --primary:   #1a1a2e;
+      --accent:    #e94560;
+      --accent2:   #0f3460;
+      --highlight: #533483;
+      --light:     #f4f4f8;
+      --card-bg:   #ffffff;
+      --code-bg:   #1e1e2e;
+      --text:      #2d2d2d;
+      --muted:     #6b7280;
+      --radius:    12px;
+      --shadow:    0 4px 20px rgba(0,0,0,.1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--light);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    /* ── HERO ─────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent2) 60%, var(--highlight) 100%);
+      color: #fff;
+      padding: 3rem 2rem 4rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; left: 0; right: 0;
+      height: 60px;
+      background: var(--light);
+      clip-path: ellipse(55% 100% at 50% 100%);
+    }
+    .hero .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: .3rem .9rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: .75rem;
+    }
+    .hero h1 span { color: #f9c74f; }
+    .hero p { font-size: 1.1rem; max-width: 620px; margin: 0 auto 1.5rem; opacity: .9; }
+    .hero .meta { font-size: .85rem; opacity: .7; }
+
+    .banner-img {
+      margin: 2rem auto 0;
+      max-width: 780px;
+      width: 90%;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,.4);
+    }
+    .banner-img img { width: 100%; display: block; }
+
+    /* ── LAYOUT ───────────────────────────────────────── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* ── NAV / TOC ────────────────────────────────────── */
+    .toc-bar {
+      background: var(--accent2);
+      color: #fff;
+      padding: .6rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    }
+    .toc-bar ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .25rem 1rem;
+      justify-content: center;
+    }
+    .toc-bar a {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: .82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      padding: .2rem .4rem;
+      border-radius: 4px;
+      transition: color .2s, background .2s;
+    }
+    .toc-bar a:hover { color: #fff; background: rgba(255,255,255,.15); }
+
+    /* ── SECTION ──────────────────────────────────────── */
+    section { padding: 4rem 0 2rem; }
+    section + section { border-top: 1px solid #e2e8f0; }
+
+    .section-label {
+      display: inline-block;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: .4rem;
+    }
+    h2 {
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent2);
+      margin: 2rem 0 .6rem;
+    }
+    p { margin-bottom: 1rem; }
+
+    /* ── CARDS ────────────────────────────────────────── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+      margin: 1.5rem 0;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      border-left: 4px solid var(--accent);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,.15); }
+    .card .icon { font-size: 2rem; margin-bottom: .75rem; }
+    .card h4 { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: .4rem; }
+    .card p { font-size: .9rem; color: var(--muted); margin: 0; }
+
+    .card.accent2 { border-left-color: var(--accent2); }
+    .card.highlight { border-left-color: var(--highlight); }
+    .card.success { border-left-color: #10b981; }
+
+    /* ── CALLOUT ──────────────────────────────────────── */
+    .callout {
+      background: #fff7ed;
+      border-left: 4px solid #f59e0b;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      font-size: .95rem;
+    }
+    .callout.info { background: #eff6ff; border-color: #3b82f6; }
+    .callout.danger { background: #fef2f2; border-color: var(--accent); }
+    .callout strong { display: block; margin-bottom: .25rem; }
+
+    /* ── IMAGES ───────────────────────────────────────── */
+    .img-block {
+      margin: 2rem 0;
+      text-align: center;
+    }
+    .img-block img {
+      max-width: 100%;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid #e2e8f0;
+    }
+    .img-block figcaption {
+      margin-top: .6rem;
+      font-size: .82rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* ── CODE ─────────────────────────────────────────── */
+    pre {
+      background: var(--code-bg);
+      color: #cdd6f4;
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      font-size: .85rem;
+      line-height: 1.6;
+      margin: 1rem 0 1.5rem;
+      position: relative;
+    }
+    pre .lang-tag {
+      position: absolute;
+      top: .5rem; right: .75rem;
+      font-size: .7rem;
+      color: #6c7086;
+      font-family: monospace;
+      letter-spacing: .05em;
+    }
+    code { font-family: 'Cascadia Code', 'Fira Code', monospace; }
+    :not(pre) > code {
+      background: #e2e8f0;
+      color: var(--accent2);
+      padding: .15rem .4rem;
+      border-radius: 4px;
+      font-size: .88em;
+    }
+    .kw { color: #cba6f7; }
+    .str { color: #a6e3a1; }
+    .cmt { color: #6c7086; font-style: italic; }
+    .fn  { color: #89b4fa; }
+    .num { color: #fab387; }
+
+    /* ── TABLES ───────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; margin: 1.5rem 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .9rem;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    thead { background: var(--accent2); color: #fff; }
+    th, td { padding: .75rem 1rem; text-align: left; }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+    tbody tr:hover { background: #eff6ff; }
+    td:first-child { font-weight: 600; color: var(--accent2); }
+
+    /* ── SHOT BADGES ──────────────────────────────────── */
+    .shot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .shot-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .shot-card .pill {
+      display: inline-block;
+      font-size: .7rem;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: .25rem .8rem;
+      border-radius: 999px;
+      margin-bottom: .75rem;
+    }
+    .pill-zero { background: #fee2e2; color: #dc2626; }
+    .pill-one  { background: #fef9c3; color: #ca8a04; }
+    .pill-few  { background: #dcfce7; color: #16a34a; }
+    .shot-card p { font-size: .82rem; color: var(--muted); margin: 0; }
+
+    /* ── MINDSET STEPS ────────────────────────────────── */
+    .steps { counter-reset: step; display: flex; flex-direction: column; gap: 1rem; margin: 1.5rem 0; }
+    .step {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.25rem;
+    }
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      flex-shrink: 0;
+      width: 2.2rem; height: 2.2rem;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+      font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .step h4 { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: .25rem; }
+    .step p  { font-size: .9rem; color: var(--muted); margin: 0; }
+
+    /* ── KNOWLEDGE CHECK ──────────────────────────────── */
+    .quiz {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+    .quiz h3 { margin-top: 0; color: var(--primary); }
+    .quiz ol { padding-left: 1.4rem; }
+    .quiz li { margin: .5rem 0; font-size: .95rem; }
+    .answer {
+      margin-top: 1.25rem;
+      padding: 1rem 1.25rem;
+      background: #f0fdf4;
+      border-left: 4px solid #16a34a;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: .9rem;
+    }
+    .answer strong { color: #16a34a; }
+
+    /* ── INTERACTIVE QUIZ ─────────────────────────────── */
+    .iq-option {
+      display: flex;
+      align-items: center;
+      gap: .65rem;
+      padding: .6rem .9rem;
+      margin: .4rem 0;
+      border-radius: 8px;
+      border: 2px solid #e2e8f0;
+      cursor: pointer;
+      font-size: .95rem;
+      transition: border-color .2s, background .2s;
+      user-select: none;
+    }
+    .iq-option:hover { border-color: #93c5fd; background: #eff6ff; }
+    .iq-option input[type="radio"] { accent-color: var(--accent2); width: 1.1rem; height: 1.1rem; flex-shrink: 0; }
+    .iq-option.correct  { border-color: #16a34a; background: #f0fdf4; }
+    .iq-option.wrong    { border-color: var(--accent); background: #fef2f2; }
+    .iq-btn {
+      margin-top: 1rem;
+      padding: .55rem 1.4rem;
+      background: var(--accent2);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: .92rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .iq-btn:hover { background: var(--highlight); }
+    .iq-feedback {
+      display: none;
+      margin-top: 1rem;
+      padding: .9rem 1.1rem;
+      border-radius: 8px;
+      font-size: .9rem;
+      font-weight: 600;
+    }
+    .iq-feedback.show { display: block; }
+    .iq-feedback.ok   { background: #f0fdf4; border-left: 4px solid #16a34a; color: #166534; }
+    .iq-feedback.fail { background: #fef2f2; border-left: 4px solid var(--accent); color: #991b1b; }
+
+    /* ── NOTEBOOKS ────────────────────────────────────── */
+    .notebooks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .nb-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.25rem;
+      border-top: 4px solid var(--highlight);
+      text-align: center;
+    }
+    .nb-card .nb-icon { font-size: 2.2rem; margin-bottom: .5rem; }
+    .nb-card h4 { font-size: .9rem; font-weight: 700; color: var(--primary); margin-bottom: .3rem; }
+    .nb-card p  { font-size: .8rem; color: var(--muted); margin: 0; }
+
+    /* ── FOOTER ───────────────────────────────────────── */
+    footer {
+      background: var(--primary);
+      color: #94a3b8;
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: .85rem;
+      margin-top: 4rem;
+    }
+    footer strong { color: #fff; }
+
+    /* ── RESPONSIVE ───────────────────────────────────── */
+    @media (max-width: 640px) {
+      h2 { font-size: 1.5rem; }
+      pre { font-size: .78rem; }
+      .toc-bar ul { gap: .15rem .6rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════════════ -->
+<header class="hero">
+  <div class="badge">Introducción a la IA · Lecture 13</div>
+  <h1>Fundamentos de<br><span>Prompt Engineering</span></h1>
+  <p>Diseña y optimiza tus instrucciones para obtener respuestas precisas, consistentes y de alta calidad de los modelos de lenguaje.</p>
+  <p class="meta">EAFIT · Curso Introducción a la IA 2026-S1 · Abril 2026</p>
+  <div class="banner-img">
+    <img src="images/04-lesson-banner.png" alt="Banner Prompt Engineering" />
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════
+     NAV
+════════════════════════════════════════════════════ -->
+<nav class="toc-bar">
+  <ul>
+    <li><a href="#intro">Introducción</a></li>
+    <li><a href="#que-es">¿Qué es?</a></li>
+    <li><a href="#tokenizacion">Tokenización</a></li>
+    <li><a href="#por-que">¿Por qué importa?</a></li>
+    <li><a href="#construccion">Construcción</a></li>
+    <li><a href="#tecnicas">Técnicas</a></li>
+    <li><a href="#buenas-practicas">Buenas Prácticas</a></li>
+    <li><a href="#notebooks">Notebooks</a></li>
+    <li><a href="#quiz">Conocimiento</a></li>
+  </ul>
+</nav>
+
+<div class="container">
+
+  <!-- ══════════════════════════════════════════════
+       1. INTRODUCCIÓN
+  ═══════════════════════════════════════════════ -->
+  <section id="intro">
+    <span class="section-label">Punto de partida</span>
+    <h2>Introducción</h2>
+    <p>
+      La <strong>IA Generativa</strong> puede crear nuevo contenido (texto, imágenes, audio, código) en respuesta a solicitudes del usuario, gracias a los <em>Large Language Models</em> (LLMs) como la familia GPT de OpenAI, entrenados con lenguaje natural y código.
+    </p>
+    <p>
+      Los usuarios interactúan con estos modelos mediante <strong>prompts</strong>: entradas de texto que el modelo usa para generar una <em>completación</em>. La calidad del prompt determina directamente la calidad de la respuesta.
+    </p>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="icon">🎯</div>
+        <h4>Objetivos de la clase</h4>
+        <p>Explicar qué es el Prompt Engineering, describir sus componentes y aplicar técnicas con ejemplos reales usando la API de OpenAI.</p>
+      </div>
+      <div class="card accent2">
+        <div class="icon">🧩</div>
+        <h4>Términos clave</h4>
+        <p><strong>Prompt</strong>: entrada de texto al modelo.<br>
+           <strong>Completación</strong>: respuesta generada.<br>
+           <strong>Token</strong>: unidad mínima de texto procesada.</p>
+      </div>
+      <div class="card highlight">
+        <div class="icon">🏫</div>
+        <h4>Caso educativo</h4>
+        <p>Administradores, docentes y estudiantes pueden diseñar prompts para análisis curricular, planes de clase y tutoría personalizada.</p>
+      </div>
+    </div>
+
+    <figure class="img-block">
+      <img src="images/04-prompt-engineering-sketchnote.png" alt="Guía ilustrada de Prompt Engineering" />
+      <figcaption>Guía ilustrada: mapa conceptual completo del Prompt Engineering</figcaption>
+    </figure>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       2. QUÉ ES
+  ═══════════════════════════════════════════════ -->
+  <section id="que-es">
+    <span class="section-label">Concepto fundamental</span>
+    <h2>¿Qué es el Prompt Engineering?</h2>
+    <p>
+      El <strong>Prompt Engineering</strong> es el proceso de <em>diseñar y optimizar</em> entradas de texto (prompts) para obtener respuestas consistentes y de calidad para un objetivo de aplicación y modelo determinado. Es un proceso de dos pasos:
+    </p>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="icon">✏️</div>
+        <h4>1. Diseño inicial</h4>
+        <p>Crear el prompt original adaptado al modelo y al objetivo específico de la aplicación.</p>
+      </div>
+      <div class="card accent2">
+        <div class="icon">🔄</div>
+        <h4>2. Refinamiento iterativo</h4>
+        <p>Mejorar el prompt en ciclos sucesivos para elevar la calidad de la respuesta mediante prueba y error.</p>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <strong>💡 Arte antes que ciencia</strong>
+      El Prompt Engineering es actualmente más arte que ciencia. La mejor forma de desarrollar intuición es <em>practicar</em> y combinar conocimiento del dominio con las técnicas recomendadas y las optimizaciones específicas de cada modelo.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       3. TOKENIZACIÓN & MODELOS
+  ═══════════════════════════════════════════════ -->
+  <section id="tokenizacion">
+    <span class="section-label">Bajo el capó</span>
+    <h2>Tokenización y Modelos Base</h2>
+
+    <h3>Tokenización</h3>
+    <p>
+      Un LLM percibe un prompt como una <strong>secuencia de tokens</strong>. Distintos modelos tokenizan el mismo texto de maneras diferentes. Dado que los LLMs se entrenan sobre tokens (no texto crudo), la tokenización impacta directamente la calidad de la respuesta generada.
+    </p>
+
+    <figure class="img-block">
+      <img src="images/04-tokenizer-example.png" alt="Ejemplo de tokenización OpenAI" />
+      <figcaption>Ejemplo del tokenizador de OpenAI: cada color representa un token distinto</figcaption>
+    </figure>
+
+    <p>Con Gemini puedes contar tokens <strong>antes de enviar el prompt</strong>, sin gastar cuota de generación:</p>
+
+    <pre><code><span class="lang-tag">python — gemini_prompt_engineering.ipynb · Ejercicio 1</span><span class="kw">import</span> os
+<span class="kw">from</span> dotenv <span class="kw">import</span> load_dotenv
+<span class="kw">from</span> google <span class="kw">import</span> genai
+<span class="kw">from</span> google.genai <span class="kw">import</span> types
+
+load_dotenv()
+
+<span class="cmt"># Inicializamos el cliente con la API key de Gemini</span>
+client = genai.<span class="fn">Client</span>(api_key=os.<span class="fn">getenv</span>(<span class="str">"GEMINI_API_KEY"</span>))
+MODELO = <span class="str">"gemini-2.5-flash-lite"</span>
+
+text = <span class="str">"""
+Júpiter es el quinto planeta desde el Sol y el más grande del Sistema Solar.
+Es un gigante gaseoso con una masa de una milésima parte de la del Sol,
+pero dos veces y media la de todos los demás planetas del Sistema Solar combinados.
+Júpiter es uno de los objetos más brillantes visibles a simple vista en el cielo nocturno
+y ha sido conocido por las civilizaciones antiguas desde antes de la historia escrita.
+Recibe su nombre del dios romano Júpiter.
+"""</span>
+
+<span class="cmt"># Contamos tokens sin consumir cuota de generación</span>
+resultado = client.models.<span class="fn">count_tokens</span>(
+    model=MODELO,
+    contents=text
+)
+
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Número de tokens: {resultado.total_tokens}"</span>)
+</code></pre>
+
+    <div class="callout info">
+      <strong>🖥️ Salida real del notebook</strong><br/>
+      <code>Número de tokens: 109</code><br/><br/>
+      A diferencia de <code>tiktoken</code> (que opera localmente), Gemini llama directamente a la API para contar tokens con el mismo tokenizador que usará al generar. Esto garantiza exactitud, especialmente con textos en español u otros idiomas.
+    </div>
+
+    <h3>Modelos Base (Foundation Models)</h3>
+    <p>
+      La función principal de un <strong>LLM base</strong> es predecir el siguiente token en la secuencia. Estos modelos no entienden el <em>significado</em> de las palabras; identifican patrones estadísticos y los continúan.
+    </p>
+
+    <figure class="img-block">
+      <img src="images/04-playground-chat-base.png" alt="Completación con modelo base" />
+      <figcaption>Completación con modelo base en el Playground de Azure OpenAI</figcaption>
+    </figure>
+
+    <h3>LLMs con Ajuste por Instrucciones (Instruction-Tuned)</h3>
+    <p>
+      Los modelos ajustados con instrucciones parten del modelo base y se refinan con ejemplos de pares entrada/salida mediante técnicas como <strong>RLHF</strong> (Reinforcement Learning with Human Feedback). Aprenden a <em>seguir instrucciones</em> y <em>aprender del feedback</em>, produciendo respuestas más prácticas y relevantes.
+    </p>
+
+    <figure class="img-block">
+      <img src="images/04-playground-chat-instructions.png" alt="Completación con instrucciones" />
+      <figcaption>El mismo prompt con un mensaje de sistema produce un resultado estructurado y dirigido</figcaption>
+    </figure>
+
+    <div class="callout">
+      <strong>🧪 Ejemplo de instrucción de sistema</strong>
+      <em>"Summarize content you are provided with for a second-grade student. Keep the result to one paragraph with 3-5 bullet points."</em><br/>
+      El modelo ahora produce una respuesta en el formato y nivel exactos solicitados.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       4. POR QUÉ IMPORTA
+  ═══════════════════════════════════════════════ -->
+  <section id="por-que">
+    <span class="section-label">Motivación</span>
+    <h2>¿Por qué necesitamos Prompt Engineering?</h2>
+    <p>Los LLMs actuales presentan desafíos que dificultan obtener respuestas confiables sin esfuerzo en el diseño del prompt:</p>
+
+    <div class="card-grid">
+      <div class="card danger">
+        <div class="icon">🎲</div>
+        <h4>Respuestas estocásticas</h4>
+        <p>El <em>mismo prompt</em> puede producir respuestas diferentes en distintos modelos o versiones, o incluso en el mismo modelo en momentos distintos.</p>
+      </div>
+      <div class="card danger">
+        <div class="icon">🌀</div>
+        <h4>Fabricaciones</h4>
+        <p>Los modelos pueden generar información incorrecta o inexistente porque su conocimiento está limitado a los datos de entrenamiento.</p>
+      </div>
+      <div class="card accent2">
+        <div class="icon">⚙️</div>
+        <h4>Variación de capacidades</h4>
+        <p>Modelos más nuevos ofrecen más capacidades pero también nuevas particularidades, costos y complejidades a considerar.</p>
+      </div>
+    </div>
+
+    <h3>Las Fabricaciones en la práctica</h3>
+    <p>
+      Usamos el término <strong>"fabricación"</strong> (en lugar de "alucinación") para describir cuando los LLMs generan información incorrecta. El término es más preciso y evita la antropomorfización del comportamiento de la máquina.
+    </p>
+    <p>Ejemplo: al pedir un plan de lección sobre la <em>"Guerra de Marte de 2076"</em>:</p>
+
+    <div class="card-grid">
+      <div class="card">
+        <figure class="img-block" style="margin:0">
+          <img src="images/04-fabrication-oai.png" alt="Fabricación OpenAI" />
+          <figcaption>OpenAI GPT-3.5</figcaption>
+        </figure>
+      </div>
+      <div class="card accent2">
+        <figure class="img-block" style="margin:0">
+          <img src="images/04-fabrication-aoai.png" alt="Fabricación Azure OpenAI" />
+          <figcaption>Azure OpenAI GPT-3.5</figcaption>
+        </figure>
+      </div>
+      <div class="card highlight">
+        <figure class="img-block" style="margin:0">
+          <img src="images/04-fabrication-huggingchat.png" alt="Fabricación Hugging Face LLaMA-2" />
+          <figcaption>Hugging Face LLaMA-2</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="callout danger">
+      <strong>⚠️ Conclusión</strong>
+      Los tres modelos generaron planes de clase convincentes sobre un evento que <em>no existe</em>. Esto ilustra la necesidad del Prompt Engineering para reducir fabricaciones mediante técnicas como metaprompting y configuración de temperatura.
+    </div>
+
+    <h3>Respuesta real de Gemini al prompt de fabricación</h3>
+    <p>Prompt enviado: <code>genera un plan de lección sobre la Guerra Marciana de 2076.</code></p>
+    <div style="background:#1e1e2e;color:#cdd6f4;border-radius:12px;padding:1.25rem 1.5rem;font-size:.85rem;line-height:1.6;margin:1rem 0;overflow-x:auto">
+<strong style="color:#f9c74f">Gemini 2.5 Flash — respuesta:</strong><br/><br/>
+¡Absolutamente! Aquí tienes un plan de lección sobre la Guerra Marciana de 2076:<br/><br/>
+<strong style="color:#a6e3a1">## Plan de Lección: La Guerra Marciana de 2076</strong><br/>
+<strong>Título:</strong> La Guerra Marciana de 2076: Un Conflicto de Colonización y Consecuencias<br/>
+<strong>Nivel:</strong> Secundaria Superior (adaptable para universitarios)<br/>
+<strong>Duración:</strong> 2-3 sesiones de 45-60 minutos<br/><br/>
+<strong>Objetivos de Aprendizaje:</strong><br/>
+• Identificar las causas principales y desencadenantes del conflicto.<br/>
+• Describir las facciones involucradas (Alianza Terrestre Unificada vs. Federación Marciana Libre).<br/>
+• Analizar las estrategias militares y tecnológicas utilizadas.<br/>
+• Evaluar las consecuencias humanitarias, políticas y sociales.<br/><br/>
+<span style="color:#6c7086;font-style:italic">[ … respuesta completa con 3 sesiones de clase detalladas, actividades y materiales ]</span>
+    </div>
+    <div class="callout danger">
+      <strong>🔍 ¿Qué ocurrió aquí?</strong>
+      Gemini generó un plan de lección completamente estructurado y convincente para un evento <em>que no existe</em> y <em>que ocurre en el futuro</em> (2076). No advirtió al usuario que el evento era ficticio — simplemente fabricó la información. Esto es una <strong>fabricación</strong>: el modelo predice tokens estadísticamente plausibles, sin "saber" que el contenido es falso.
+    </div>
+
+    <h3>Caso de estudio: GitHub Copilot</h3>
+    <p>
+      GitHub Copilot es tu <strong>"AI Pair Programmer"</strong>: convierte prompts de texto en completaciones de código integradas directamente en el entorno de desarrollo (VS Code, JetBrains, etc.). Su evolución es un ejemplo real de cómo el Prompt Engineering mejora productos de IA en producción.
+    </p>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="icon">🧠</div>
+        <h4>Origen: modelo Codex</h4>
+        <p>La primera versión se basó en OpenAI Codex. Los ingenieros detectaron rápidamente que necesitaban técnicas de PE más avanzadas para mejorar la calidad y relevancia del código generado.</p>
+      </div>
+      <div class="card accent2">
+        <div class="icon">🔬</div>
+        <h4>Ingeniería del contexto</h4>
+        <p>Copilot analiza el archivo activo, los archivos abiertos en pestañas y los comentarios del código para construir un prompt rico en contexto que guía al modelo hacia sugerencias relevantes.</p>
+      </div>
+      <div class="card highlight">
+        <div class="icon">🚀</div>
+        <h4>Modelo mejorado (Jul 2023)</h4>
+        <p>En julio de 2023 debutaron un modelo que va más allá de Codex, con sugerencias más rápidas, precisas y conscientes del proyecto completo, no solo del archivo actual.</p>
+      </div>
+      <div class="card success">
+        <div class="icon">🔄</div>
+        <h4>Iteración continua</h4>
+        <p>El equipo documentó su aprendizaje públicamente: desde mejorar la comprensión del código hasta construir apps LLM empresariales, mostrando que el PE es un proceso iterativo permanente.</p>
+      </div>
+      <div class="card">
+        <div class="icon">📐</div>
+        <h4>Prompt Engineering aplicado</h4>
+        <p>Copilot usa plantillas internas, contenido primario (código circundante) y contenido secundario (imports, estructura del proyecto) para enriquecer cada prompt enviado al modelo.</p>
+      </div>
+      <div class="card accent2">
+        <div class="icon">🏢</div>
+        <h4>Lección empresarial</h4>
+        <p>Su historia demuestra que construir una app LLM exitosa requiere: fine-tuning del modelo, PE disciplinado, feedback de usuarios reales y mejora continua del pipeline de prompts.</p>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <strong>📖 Lectura recomendada (en orden)</strong>
+      Mayo 2023: "How GitHub Copilot is getting better at understanding your code" →
+      Jun 2023: "How to write better prompts for GitHub Copilot" →
+      Jul 2023: "A Developer's Guide to Prompt Engineering and LLMs" →
+      Sep 2023: "How to build an enterprise LLM application: Lessons from GitHub Copilot"
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       5. CONSTRUCCIÓN DE PROMPTS
+  ═══════════════════════════════════════════════ -->
+  <section id="construccion">
+    <span class="section-label">Anatomía del prompt</span>
+    <h2>Construcción de Prompts</h2>
+
+    <h3>Prompt Básico</h3>
+    <p>Una entrada de texto simple sin contexto adicional. El modelo predice la continuación basándose en patrones de entrenamiento.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Prompt (Entrada)</th><th>Completación (Salida)</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>oh say can you see</td>
+            <td><em>Respuesta real de Gemini 2.5 Flash:</em> "Oh, say can you see" are the first words of "The Star-Spangled Banner," the national anthem of the United States of America. The full first line is: <strong>"Oh, say can you see, by the dawn's early light,"</strong> It's a very famous and recognizable opening to a patriotic song.</td>
+          </tr>
+          <tr>
+            <td>En un lugar de La Mancha, de cuyo nombre</td>
+            <td><em>Comportamiento esperado (base LLM):</em> …no quiero acordarme, no ha mucho tiempo que vivía un hidalgo de los de lanza en astillero, adarga antigua, rocín flaco y galgo corredor. <br/><small style="color:#6b7280">⚠️ Un LLM instruction-tuned como Gemini puede responder de forma conversacional en lugar de continuar verbatim. Ver sección de Tokenización.</small></td>
+          </tr>
+          <tr>
+            <td>To be or not to be,</td>
+            <td><em>Comportamiento esperado (base LLM):</em> …that is the question: Whether 'tis nobler in the mind to suffer the slings and arrows of outrageous fortune, or to take arms against a sea of troubles…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout info">
+      <strong>💡 ¿Qué demuestra esto?</strong>
+      El modelo no "entiende" los textos — reconoce patrones estadísticos en sus datos de entrenamiento. Cuando el inicio de una frase famosa aparece en millones de documentos, el modelo predice con alta confianza la continuación más probable.
+    </div>
+
+    <h3>Prompt Complejo (Chat Completion)</h3>
+    <p>
+      Un <strong>prompt complejo</strong> utiliza la API de Chat Completion para construir una conversación estructurada con <em>múltiples roles y mensajes</em>. A diferencia del prompt básico (una sola línea de texto), el prompt complejo permite:
+    </p>
+    <div class="card-grid">
+      <div class="card">
+        <div class="icon">🖥️</div>
+        <h4>Rol <code>system</code></h4>
+        <p>Define la <strong>personalidad, contexto y restricciones</strong> del asistente. Es el mensaje más poderoso: establece el tono y comportamiento para toda la conversación. Ej.: <em>"Eres un tutor de física para estudiantes de bachillerato."</em></p>
+      </div>
+      <div class="card accent2">
+        <div class="icon">👤</div>
+        <h4>Rol <code>user</code></h4>
+        <p>Representa la <strong>pregunta o solicitud del usuario</strong>. Puede aparecer múltiples veces para simular turnos de una conversación real.</p>
+      </div>
+      <div class="card highlight">
+        <div class="icon">🤖</div>
+        <h4>Rol <code>assistant</code></h4>
+        <p>Simula <strong>respuestas previas del modelo</strong>. Incluirlas en el historial da contexto multi-turno: el modelo "recuerda" lo que ya dijo y mantiene coherencia.</p>
+      </div>
+    </div>
+    <p>
+      La <strong>tokenización</strong> captura toda esta cadena de mensajes como una secuencia unificada. Cambiar el mensaje de sistema puede ser tan impactante en la calidad de la respuesta como cambiar la pregunta del usuario.
+    </p>
+
+    <pre><code><span class="lang-tag">python — gemini_prompt_engineering.ipynb · Ejercicio 5</span>response = client.models.<span class="fn">generate_content</span>(
+    model=MODELO,
+    config=types.<span class="fn">GenerateContentConfig</span>(
+        <span class="cmt"># 1. Sistema: define la personalidad/contexto del asistente</span>
+        system_instruction=<span class="str">"Eres un asistente sarcástico."</span>,
+    ),
+    contents=[
+        <span class="cmt"># 2. Usuario: primera pregunta</span>
+        types.<span class="fn">Content</span>(role=<span class="str">"user"</span>,  parts=[types.<span class="fn">Part</span>(text=<span class="str">"¿Quién ganó la Serie Mundial de 2020?"</span>)]),
+        <span class="cmt"># 3. "model": respuesta anterior (en Gemini el rol es "model", no "assistant")</span>
+        types.<span class="fn">Content</span>(role=<span class="str">"model"</span>, parts=[types.<span class="fn">Part</span>(text=<span class="str">"¿Quién crees tú? Los Dodgers de Los Ángeles, por supuesto."</span>)]),
+        <span class="cmt"># 4. Usuario: pregunta de seguimiento → el modelo ya tiene contexto</span>
+        types.<span class="fn">Content</span>(role=<span class="str">"user"</span>,  parts=[types.<span class="fn">Part</span>(text=<span class="str">"¿Dónde se jugó?"</span>)]),
+    ]
+)
+
+<span class="fn">print</span>(response.text)
+</code></pre>
+
+    <div class="callout info">
+      <strong>🖥️ Respuesta real de Gemini 2.5 Flash</strong><br/>
+      <em>"Ah, ¿así que no solo no sabes quién ganó, sino que tampoco recuerdas dónde se celebró? Bueno, te lo diré, solo porque me da pena. Se jugó en el Globe Life Field en Arlington, Texas. Un lugar bastante genérico, para ser honestos, pero supongo que a alguien le pareció una buena idea."</em>
+    </div>
+
+    <div class="callout">
+      <strong>🔑 Clave del prompt complejo</strong>
+      El historial de mensajes <em>no es memoria del modelo</em> — tú lo envías explícitamente en cada llamada. Esto significa que puedes fabricar un historial previo para guiar al modelo hacia el tono o contexto deseado desde el primer intercambio.
+    </div>
+
+    <h3>Prompt con Instrucción</h3>
+    <p>
+      Con un <strong>instruction prompt</strong> usas el texto para especificar una tarea con detalle creciente. Cuanto más específica sea la instrucción, más precisa y útil será la respuesta. La tabla completa del README muestra la diferencia entre tres niveles:
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Prompt (Entrada)</th><th>Completación (Salida)</th><th>Tipo de instrucción</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Write a description of the Civil War</td>
+            <td>Devuelve un párrafo simple con información general sobre la Guerra Civil.</td>
+            <td>Simple</td>
+          </tr>
+          <tr>
+            <td>Write a description of the Civil War. Provide key dates and events and describe their significance</td>
+            <td>Devuelve un párrafo introductorio seguido de una lista de fechas clave con sus descripciones e importancia histórica.</td>
+            <td>Compleja</td>
+          </tr>
+          <tr>
+            <td>Write a description of the Civil War in 1 paragraph. Provide 3 bullet points with key dates and their significance. Provide 3 more bullet points with key historical figures and their contributions. Return the output as a JSON file</td>
+            <td>Devuelve información detallada con el formato exacto solicitado: párrafo + 3 puntos de fechas + 3 puntos de figuras, todo estructurado como un archivo JSON válido.</td>
+            <td>Compleja + Formateada</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout info">
+      <strong>💡 Progresión de especificidad</strong>
+      Cada nivel añade más restricciones: <em>Simple</em> deja al modelo decidir la estructura. <em>Compleja</em> define qué incluir. <em>Compleja + Formateada</em> también define cómo estructurar la salida. Cuanto más específico seas, más predecible y reutilizable es la respuesta.
+    </div>
+
+    <h3>Contenido Primario y Secundario</h3>
+    <p>Un prompt puede dividirse en:</p>
+    <div class="card-grid">
+      <div class="card">
+        <div class="icon">📋</div>
+        <h4>Instrucción (acción)</h4>
+        <p>Lo que quieres que haga el modelo. Ej.: "Resume esto en 2 oraciones".</p>
+      </div>
+      <div class="card accent2">
+        <div class="icon">📄</div>
+        <h4>Contenido Primario</h4>
+        <p>El material sobre el cual actúa la instrucción. Ej.: el párrafo sobre Júpiter.</p>
+      </div>
+      <div class="card highlight">
+        <div class="icon">🔧</div>
+        <h4>Contenido Secundario</h4>
+        <p>Contexto adicional que afina la salida: parámetros de formato, taxonomías, criterios de prioridad, etc.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       6. TÉCNICAS
+  ═══════════════════════════════════════════════ -->
+  <section id="tecnicas">
+    <span class="section-label">Herramientas del oficio</span>
+    <h2>Técnicas de Prompt Engineering</h2>
+
+    <h3>Zero-shot, One-shot y Few-shot Prompting</h3>
+    <p>Se refiere al número de <strong>ejemplos</strong> que incluyes en el prompt para que el modelo infiera el patrón deseado:</p>
+
+    <div class="shot-grid">
+      <div class="shot-card">
+        <span class="pill pill-zero">Zero-shot</span>
+        <p><strong>Sin ejemplos.</strong><br/>Solo instrucción explícita.<br/><em>"The Sun is Shining". Translate to Spanish</em> → <em>"El Sol está brillando".</em></p>
+      </div>
+      <div class="shot-card">
+        <span class="pill pill-one">One-shot</span>
+        <p><strong>Un ejemplo.</strong><br/>El modelo infiere el patrón.<br/><em>"The Sun is Shining" → "El Sol está brillando". "It's a Cold and Windy Day" →</em></p>
+      </div>
+      <div class="shot-card">
+        <span class="pill pill-few">Few-shot</span>
+        <p><strong>Varios ejemplos.</strong><br/>Mayor precisión sin instrucción explícita.<br/><em>Baseball / Tennis / Cricket → Basketball</em></p>
+      </div>
+    </div>
+
+    <h3>Pistas (Prompt Cues)</h3>
+    <p>
+      En lugar de dar ejemplos completos, las <strong>pistas</strong> son fragmentos iniciales que "empujan" al modelo en la dirección correcta. Añades al final del prompt las primeras palabras de la respuesta que deseas, y el modelo las continúa en el mismo tono y formato.
+    </p>
+    <p>Los tres ejemplos a continuación usan el mismo párrafo sobre Júpiter con la instrucción <strong>"Summarize This"</strong>, pero cambian solo la pista añadida al final:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th># Pistas</th><th>Pista añadida al prompt</th><th>Completación obtenida</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>0 — Sin pista</td>
+            <td><em>(ninguna, solo "Summarize This")</em></td>
+            <td>Jupiter is the largest planet in our Solar System and the fifth one from the Sun. It is a gas giant with a mass 1/1000th of the Sun's, but it is heavier than all the other planets combined. Ancient civilizations have known about Jupiter for a long time, and it is easily visible in the night sky.</td>
+          </tr>
+          <tr>
+            <td>1 — Inicio de oración</td>
+            <td><em>"What we learned is that Jupiter"</em></td>
+            <td>…is the fifth planet from the Sun and the largest in the Solar System. It is a gas giant with a mass one-thousandth that of the Sun, but two-and-a-half times that of all the other planets combined. It is easily visible to the naked eye and has been known since ancient times.</td>
+          </tr>
+          <tr>
+            <td>2 — Inicio de lista</td>
+            <td><em>"Top 3 Facts We Learned:"</em></td>
+            <td>1. Jupiter is the fifth planet from the Sun and the largest in the Solar System.<br/>2. It is a gas giant with a mass one-thousandth that of the Sun…<br/>3. Jupiter has been visible to the naked eye since ancient times…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <strong>🎯 ¿Qué demuestran estos ejemplos?</strong>
+      La pista <em>no cambia la instrucción ni el contenido</em>, solo dirige el <strong>formato de salida</strong>: sin pista → párrafo libre; inicio de oración → texto fluido; inicio de lista numerada → respuesta estructurada. Es una técnica de bajo costo y alto impacto para controlar la forma de la respuesta.
+    </div>
+
+    <h3>Plantillas de Prompts</h3>
+    <p>
+      Una <strong>plantilla</strong> es una receta predefinida de prompt con marcadores de posición (variables) que se pueden rellenar dinámicamente con datos de distintas fuentes: entrada del usuario, contexto del sistema, datos externos, etc.
+    </p>
+    <pre><code><span class="lang-tag">python — plantilla simple</span>template = <span class="str">"""
+Eres un experto en {dominio}.
+Resume el siguiente texto en {num_puntos} puntos clave para {audiencia}:
+
+{texto}
+"""</span>
+
+prompt = template.<span class="fn">format</span>(
+    dominio=<span class="str">"astronomía"</span>,
+    num_puntos=<span class="num">3</span>,
+    audiencia=<span class="str">"estudiantes de bachillerato"</span>,
+    texto=texto_sobre_jupiter
+)
+</code></pre>
+
+    <div class="callout info">
+      <strong>📚 Librería Prompts For Edu</strong>
+      El repositorio <em>Prompts For Edu</em> de Microsoft ofrece una colección curada de prompts para el dominio educativo: planificación de lecciones, diseño curricular y tutoría personalizada.
+    </div>
+
+    <h3>Función auxiliar y Ejercicio 4: Prompt con instrucción (Notebook Gemini)</h3>
+    <pre><code><span class="lang-tag">python — gemini_prompt_engineering.ipynb · Ejercicio 4</span><span class="kw">def</span> <span class="fn">get_completion</span>(prompt, system_instruction=<span class="str">"Eres un asistente útil."</span>,
+                   temperature=<span class="num">1.0</span>, max_tokens=<span class="num">1000</span>):
+    <span class="str">"""Función auxiliar para obtener una respuesta de Gemini."""</span>
+    response = client.models.<span class="fn">generate_content</span>(
+        model=MODELO,
+        config=types.<span class="fn">GenerateContentConfig</span>(
+            system_instruction=system_instruction,
+            temperature=temperature,
+            max_output_tokens=max_tokens,
+        ),
+        contents=prompt
+    )
+    <span class="kw">return</span> response.text
+
+<span class="cmt"># Ejemplo: resumir para un estudiante de segundo grado</span>
+text = <span class="str">"""
+Júpiter es el quinto planeta desde el Sol y el más grande del Sistema Solar.
+Es un gigante gaseoso con una masa de una milésima parte de la del Sol,
+pero dos veces y media la de todos los demás planetas del Sistema Solar combinados.
+Júpiter es uno de los objetos más brillantes visibles a simple vista en el cielo nocturno
+y ha sido conocido por las civilizaciones antiguas desde antes de la historia escrita.
+"""</span>
+
+prompt = <span class="fn">f</span><span class="str">"""
+Resume el contenido que se te proporciona para un estudiante de segundo grado.
+```{text}```
+"""</span>
+
+<span class="fn">print</span>(<span class="fn">get_completion</span>(prompt))
+</code></pre>
+
+    <div class="callout info">
+      <strong>🖥️ Respuesta real de Gemini 2.5 Flash</strong><br/>
+      <em>"¡Imagina un planeta ¡<strong>ENORME</strong>! Ese es Júpiter, ¡el planeta más grande de todos! Es tan grande que es como si juntáramos a todos los otros planetas y Júpiter fuera el doble de grande que todos ellos juntos. Júpiter está lejos, es el quinto planeta si contamos desde nuestro amigo el Sol. A veces, Júpiter brilla tanto en el cielo nocturno que ¡hasta puedes ver tu sombra! Los antiguos sabían de Júpiter hace mucho, mucho tiempo. Le pusieron su nombre en honor a un dios romano muy importante llamado Júpiter."</em>
+    </div>
+
+    <div class="callout">
+      <strong>🔑 Diferencias clave: Gemini vs OpenAI</strong>
+      <ul style="margin-top:.5rem;padding-left:1.2rem;font-size:.9rem">
+        <li>La instrucción de sistema va en <code>GenerateContentConfig(system_instruction=...)</code>, no como un mensaje separado.</li>
+        <li>El parámetro de salida máxima se llama <code>max_output_tokens</code> (no <code>max_tokens</code>).</li>
+        <li>La respuesta se obtiene con <code>response.text</code> (no <code>response.choices[0].message.content</code>).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       7. BUENAS PRÁCTICAS
+  ═══════════════════════════════════════════════ -->
+  <section id="buenas-practicas">
+    <span class="section-label">Guía profesional</span>
+    <h2>Buenas Prácticas</h2>
+
+    <h3>Mentalidad del Prompt Engineer</h3>
+    <div class="steps">
+      <div class="step">
+        <div>
+          <h4>Comprende el dominio</h4>
+          <p>La precisión y relevancia de las respuestas dependen del dominio. Personaliza las técnicas con tu conocimiento experto: personalidades específicas del dominio, plantillas adaptadas y ejemplos del contexto real.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h4>Comprende el modelo</h4>
+          <p>Los modelos varían en dataset de entrenamiento, capacidades y tipo de contenido optimizado. Conoce las fortalezas y limitaciones del modelo que usas para priorizar tareas y construir plantillas eficaces.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h4>Itera y valida</h4>
+          <p>Los modelos evolucionan rápidamente. Usa herramientas de PE para arrancar, luego itera y valida con tu intuición y expertise. Documenta aprendizajes en una base de conocimiento reutilizable.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Tabla de Mejores Prácticas (OpenAI / Azure OpenAI)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Práctica</th><th>¿Por qué?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Evalúa los modelos más recientes</td><td>Las nuevas generaciones ofrecen mejor calidad, aunque pueden tener mayor costo.</td></tr>
+          <tr><td>Separa instrucciones y contexto</td><td>Los delimitadores ayudan al modelo a asignar pesos correctos a cada parte del prompt.</td></tr>
+          <tr><td>Sé específico y claro</td><td>Más detalles sobre contexto, formato y longitud mejoran la calidad y consistencia.</td></tr>
+          <tr><td>Sé descriptivo y usa ejemplos</td><td>Los modelos responden mejor al enfoque "mostrar y explicar". Usa zero-shot primero y luego few-shot.</td></tr>
+          <tr><td>Usa pistas para iniciar completaciones</td><td>Guía al modelo con palabras iniciales que orienten el formato de respuesta deseado.</td></tr>
+          <tr><td>Repite instrucciones clave</td><td>A veces repetir la instrucción antes y después del contenido mejora los resultados.</td></tr>
+          <tr><td>El orden importa</td><td>El orden en que presentas la información al modelo puede cambiar el output (efecto recency bias).</td></tr>
+          <tr><td>Da al modelo una "salida"</td><td>Proporciona una respuesta de reserva para cuando el modelo no puede completar la tarea, reduciendo fabricaciones.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <strong>🔁 Recuerda</strong>
+      Tu experiencia puede variar según el modelo, la tarea y el dominio. Usa estas prácticas como punto de partida e itera constantemente a medida que aparecen nuevas herramientas y modelos.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       8. NOTEBOOKS
+  ═══════════════════════════════════════════════ -->
+  <section id="notebooks">
+    <span class="section-label">Sandbox de práctica</span>
+    <h2>Notebooks Disponibles</h2>
+    <p>
+      Los Jupyter Notebooks de esta lección ofrecen un entorno interactivo para practicar las técnicas vistas. Requieren una clave de API de OpenAI o Azure OpenAI y un runtime de Python.
+    </p>
+
+    <div class="notebooks">
+      <div class="nb-card" style="border-top-color:#4285f4">
+        <div class="nb-icon">📓</div>
+        <h4>gemini_prompt_engineering.ipynb</h4>
+        <p>Notebook principal del curso. Usa <strong>Gemini 2.5 Flash</strong> de Google: tokenización nativa, fabricaciones, instrucciones y prompts multi-turno en español.</p>
+      </div>
+      <div class="nb-card">
+        <div class="nb-icon">📓</div>
+        <h4>oai-assignment.ipynb</h4>
+        <p>Referencia alternativa con la API de OpenAI (GPT-3.5-turbo). Útil para comparar comportamiento entre modelos.</p>
+      </div>
+      <div class="nb-card">
+        <div class="nb-icon">📓</div>
+        <h4>githubmodels-assignment.ipynb</h4>
+        <p>Variante con GPT-4o vía GitHub Models. Ya incluye salidas ejecutadas — ideal para ver resultados sin configurar credenciales.</p>
+      </div>
+    </div>
+
+    <h3>Ejercicios cubiertos en los notebooks</h3>
+    <div class="card-grid">
+      <div class="card success">
+        <div class="icon">1️⃣</div>
+        <h4>Tokenización</h4>
+        <p>Explora cómo <code>tiktoken</code> descompone un texto en tokens enteros y cómo se recuperan sus formas textuales.</p>
+      </div>
+      <div class="card success">
+        <div class="icon">2️⃣</div>
+        <h4>Validar API Key</h4>
+        <p>Prueba la conexión con el endpoint de OpenAI usando un prompt simple (completación del himno nacional).</p>
+      </div>
+      <div class="card success">
+        <div class="icon">3️⃣</div>
+        <h4>Fabricaciones</h4>
+        <p>Genera una lección sobre un tema inexistente y observa cómo el modelo inventa contenido creíble pero falso.</p>
+      </div>
+      <div class="card success">
+        <div class="icon">4️⃣</div>
+        <h4>Instrucciones</h4>
+        <p>Resume un texto para un estudiante de segundo grado — prueba cómo la instrucción de sistema cambia el tono y nivel.</p>
+      </div>
+      <div class="card success">
+        <div class="icon">5️⃣</div>
+        <h4>Prompt Complejo</h4>
+        <p>Crea conversaciones multi-turno con personalidades del asistente (ej. sarcástico) vía mensajes system/user/assistant.</p>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <strong>🛠️ Configuración del entorno para Gemini</strong>
+      Agrega tu clave en el archivo <code>.env</code>:<br/>
+      <code>GEMINI_API_KEY=AIza...tu-clave-aqui...</code><br/><br/>
+      Instala las dependencias con: <code>pip install google-genai python-dotenv</code><br/>
+      Obtén tu API key gratis en <strong>Google AI Studio</strong> (aistudio.google.com).
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       9. KNOWLEDGE CHECK
+  ═══════════════════════════════════════════════ -->
+  <section id="quiz">
+    <span class="section-label">Verificación de aprendizaje</span>
+    <h2>Comprobación de Conocimiento</h2>
+    <p>Selecciona tu respuesta y haz clic en <strong>Verificar</strong> para saber si es correcta.</p>
+
+    <!-- PREGUNTA 1 -->
+    <div class="quiz">
+      <h3>Pregunta 1 — El mejor prompt</h3>
+      <p>¿Cuál de los siguientes es el <strong>mejor prompt</strong> siguiendo las buenas prácticas de Prompt Engineering?</p>
+
+      <label class="iq-option"><input type="radio" name="q1" value="a"/> A) Show me an image of red car</label>
+      <label class="iq-option"><input type="radio" name="q1" value="b"/> B) Show me an image of red car of make Volvo and model XC90 parked by a cliff with the sun setting</label>
+      <label class="iq-option"><input type="radio" name="q1" value="c"/> C) Show me an image of red car of make Volvo and model XC90</label>
+
+      <button class="iq-btn" onclick="checkQ('q1','b','q1-fb')">Verificar</button>
+      <div id="q1-fb" class="iq-feedback">
+        <span class="ok-msg">✅ ¡Correcto! La opción B es la más específica: incluye marca, modelo, escenario (acantilado) y condición de luz (atardecer). La opción C es buena pero le falta el contexto del entorno. La opción A es demasiado vaga.</span>
+        <span class="fail-msg">❌ No exactamente. La respuesta correcta es la <strong>opción B</strong>: es la más detallada porque especifica marca, modelo <em>y</em> el contexto visual (acantilado con sol poniéndose), lo que produce un resultado mucho más preciso.</span>
+      </div>
+    </div>
+
+    <!-- PREGUNTA 2 -->
+    <div class="quiz">
+      <h3>Pregunta 2 — Identificación de técnica</h3>
+      <p>Incluyes <strong>tres pares entrada→salida</strong> en tu prompt antes de formular tu pregunta real. ¿Qué técnica de Prompt Engineering estás usando?</p>
+
+      <label class="iq-option"><input type="radio" name="q2" value="a"/> A) Zero-shot prompting</label>
+      <label class="iq-option"><input type="radio" name="q2" value="b"/> B) One-shot prompting</label>
+      <label class="iq-option"><input type="radio" name="q2" value="c"/> C) Few-shot prompting</label>
+      <label class="iq-option"><input type="radio" name="q2" value="d"/> D) Chain-of-thought prompting</label>
+
+      <button class="iq-btn" onclick="checkQ('q2','c','q2-fb')">Verificar</button>
+      <div id="q2-fb" class="iq-feedback">
+        <span class="ok-msg">✅ ¡Correcto! Al proporcionar múltiples ejemplos (3 o más pares entrada→salida) para que el modelo infiera el patrón, estás usando <strong>few-shot prompting</strong>.</span>
+        <span class="fail-msg">❌ Incorrecto. La respuesta correcta es <strong>C — Few-shot prompting</strong>. Zero-shot no usa ejemplos; one-shot usa exactamente uno; few-shot usa varios (generalmente 2-5) para que el modelo infiera el patrón sin instrucción explícita.</span>
+      </div>
+    </div>
+
+    <!-- PREGUNTA 3 -->
+    <div class="quiz">
+      <h3>Pregunta 3 — Roles en Chat Completion</h3>
+      <p>En la API de Chat Completion, ¿cuál es la función del mensaje con rol <strong><code>system</code></strong>?</p>
+
+      <label class="iq-option"><input type="radio" name="q3" value="a"/> A) Representa la pregunta del usuario en cada turno de la conversación</label>
+      <label class="iq-option"><input type="radio" name="q3" value="b"/> B) Define la personalidad, contexto y restricciones del asistente para toda la conversación</label>
+      <label class="iq-option"><input type="radio" name="q3" value="c"/> C) Almacena el historial de respuestas previas del modelo</label>
+      <label class="iq-option"><input type="radio" name="q3" value="d"/> D) Configura los parámetros técnicos como temperatura y max_tokens</label>
+
+      <button class="iq-btn" onclick="checkQ('q3','b','q3-fb')">Verificar</button>
+      <div id="q3-fb" class="iq-feedback">
+        <span class="ok-msg">✅ ¡Correcto! El mensaje <code>system</code> establece la <strong>personalidad y contexto</strong> del asistente. Es el mensaje más poderoso: define el tono, restricciones y comportamiento para <em>toda</em> la conversación.</span>
+        <span class="fail-msg">❌ Incorrecto. La respuesta es <strong>B</strong>. El rol <code>system</code> define la personalidad y contexto del asistente. El rol <code>user</code> representa las preguntas del usuario, y el rol <code>assistant</code> almacena respuestas previas del historial.</span>
+      </div>
+    </div>
+
+    <!-- PREGUNTA 4 -->
+    <div class="quiz">
+      <h3>Pregunta 4 — Fabricaciones</h3>
+      <p>¿Por qué usamos el término <strong>"fabricación"</strong> en lugar de "alucinación" para describir cuando un LLM genera información incorrecta?</p>
+
+      <label class="iq-option"><input type="radio" name="q4" value="a"/> A) Porque "fabricación" es más corto y fácil de recordar</label>
+      <label class="iq-option"><input type="radio" name="q4" value="b"/> B) Porque "alucinación" es un término técnico reservado para modelos de visión</label>
+      <label class="iq-option"><input type="radio" name="q4" value="c"/> C) Porque "fabricación" es más preciso y evita antropomorfizar el comportamiento de la máquina, en línea con los principios de IA responsable</label>
+      <label class="iq-option"><input type="radio" name="q4" value="d"/> D) Porque los estándares de OpenAI y Microsoft lo exigen en su documentación oficial</label>
+
+      <button class="iq-btn" onclick="checkQ('q4','c','q4-fb')">Verificar</button>
+      <div id="q4-fb" class="iq-feedback">
+        <span class="ok-msg">✅ ¡Correcto! "Fabricación" es más preciso y evita atribuir rasgos humanos (como "alucinación") a un comportamiento estadístico de la máquina. Esto está alineado con los principios de <strong>Responsible AI</strong> de Microsoft.</span>
+        <span class="fail-msg">❌ Incorrecto. La respuesta es <strong>C</strong>. El término "fabricación" se prefiere porque no antropomorfiza el comportamiento del modelo — "alucinación" implica un estado mental humano, mientras que el modelo simplemente genera predicciones estadísticas incorrectas.</span>
+      </div>
+    </div>
+
+    <!-- DESAFÍO -->
+    <div class="quiz">
+      <h3>Desafío 🚀 — Técnica de pistas</h3>
+      <p>Aprovecha la técnica de <em>pistas (cues)</em> con el siguiente prompt base:</p>
+      <div class="callout info">
+        <strong>Prompt base:</strong> <em>"Show me an image of red car of make Volvo and "</em>
+      </div>
+      <p>Experimenta en el Playground de OpenAI o en los notebooks. ¿El modelo completa el prompt de forma útil? ¿Qué pista añadirías al final para obtener exactamente el resultado que deseas?</p>
+    </div>
+  </section>
+
+</div><!-- /.container -->
+
+<!-- ═══════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════ -->
+<footer>
+  <p>
+    <strong>EAFIT · Introducción a la Inteligencia Artificial 2026-S1</strong><br/>
+    Lecture 13 · Prompt Engineering Fundamentals<br/>
+    Contenido basado en <em>Microsoft Generative AI for Beginners — Chapter 4</em>
+  </p>
+  <p style="margin-top:.75rem;font-size:.75rem;opacity:.6;">
+    Imágenes y material © Microsoft / GitHub. Uso educativo.
+  </p>
+</footer>
+
+<script>
+  function checkQ(name, correct, fbId) {
+    const selected = document.querySelector(`input[name="${name}"]:checked`);
+    const fb = document.getElementById(fbId);
+
+    // Reset all option styles for this question
+    document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+      radio.closest('.iq-option').classList.remove('correct', 'wrong');
+    });
+
+    if (!selected) {
+      fb.className = 'iq-feedback show fail';
+      fb.querySelector('.ok-msg') && (fb.querySelector('.ok-msg').style.display = 'none');
+      fb.innerHTML = '<span>⚠️ Por favor selecciona una opción antes de verificar.</span>';
+      return;
+    }
+
+    const isCorrect = selected.value === correct;
+    selected.closest('.iq-option').classList.add(isCorrect ? 'correct' : 'wrong');
+
+    // Mark correct option if wrong answer selected
+    if (!isCorrect) {
+      const correctRadio = document.querySelector(`input[name="${name}"][value="${correct}"]`);
+      if (correctRadio) correctRadio.closest('.iq-option').classList.add('correct');
+    }
+
+    fb.classList.add('show');
+    fb.classList.toggle('ok',   isCorrect);
+    fb.classList.toggle('fail', !isCorrect);
+
+    const okMsg   = fb.querySelector('.ok-msg');
+    const failMsg = fb.querySelector('.fail-msg');
+    if (okMsg)   okMsg.style.display   = isCorrect  ? 'block' : 'none';
+    if (failMsg) failMsg.style.display = !isCorrect ? 'block' : 'none';
+  }
+</script>
+</body>
+</html>
